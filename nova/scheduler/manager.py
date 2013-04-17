@@ -116,7 +116,10 @@ class SchedulerManager(manager.Manager):
         """Tries to call schedule_run_instance on the driver.
         Sets instance vm_state to ERROR on exceptions
         """
+        ## test code ##
+        f = open("/home/miroliubovm/test", 'w+')
         instance_uuids = request_spec['instance_uuids']
+        f.write(str(instance_uuids))
         with compute_utils.EventReporter(context, conductor_api.LocalAPI(),
                                          'schedule', *instance_uuids):
             try:

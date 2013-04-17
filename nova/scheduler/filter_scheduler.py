@@ -175,7 +175,7 @@ class FilterScheduler(driver.Scheduler):
 
         self._post_select_populate_filter_properties(filter_properties,
                 weighed_host.obj)
-
+######################### This is it!! #############################
         self.compute_rpcapi.run_instance(context, instance=updated_instance,
                 host=weighed_host.obj.host,
                 request_spec=request_spec, filter_properties=filter_properties,
@@ -363,7 +363,7 @@ class FilterScheduler(driver.Scheduler):
     
     def _schedule_even_hosts(self, context, request_spec, filter_properties,
                   instance_uuids=None):
-        """Мой метод, пока копия предыдущего, должен возвращать четные хосты"""
+        """My method as acopy of _schedule"""
         """Returns a list of hosts that meet the required specs,
         ordered by their fitness.
         """
@@ -421,7 +421,7 @@ class FilterScheduler(driver.Scheduler):
     
     def _get_even_hosts(self, hosts):
         hosts_ = []
-        # Цикл по hosts, чтобы вытащить четные
+        # Iterate over hosts
         for num, host in enumerate(hosts):
             if num%2==0:
                 hosts_.append(host)  
