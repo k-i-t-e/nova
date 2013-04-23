@@ -20,6 +20,7 @@ Weighing Functions.
 """
 
 import random
+import time
 
 from oslo.config import cfg
 
@@ -55,6 +56,8 @@ class FilterScheduler(driver.Scheduler):
         super(FilterScheduler, self).__init__(*args, **kwargs)
         self.cost_function_cache = None
         self.options = scheduler_options.SchedulerOptions()
+        ## My test code
+        self.test_file = open("/home/test_file", "w+")
 
     def schedule_run_instance(self, context, request_spec,
                               admin_password, injected_files,
@@ -176,6 +179,9 @@ class FilterScheduler(driver.Scheduler):
         self._post_select_populate_filter_properties(filter_properties,
                 weighed_host.obj)
 ######################### This is it!! #############################
+        ##test code
+        self.test_file.write(str(time.gmtime())+"Was schedulded an instance")
+        ##
         self.compute_rpcapi.run_instance(context, instance=updated_instance,
                 host=weighed_host.obj.host,
                 request_spec=request_spec, filter_properties=filter_properties,
