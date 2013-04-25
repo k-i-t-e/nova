@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+
 """
 The FilterScheduler is for creating instances locally.
 You can customize this scheduler by specifying your own Host Filters and
@@ -21,6 +22,7 @@ Weighing Functions.
 
 import random
 import time
+import pickle
 
 from oslo.config import cfg
 
@@ -30,6 +32,7 @@ from nova.openstack.common import log as logging
 from nova.openstack.common.notifier import api as notifier
 from nova.scheduler import driver
 from nova.scheduler import scheduler_options
+from nova.compute import api as compute_api
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -58,7 +61,67 @@ class FilterScheduler(driver.Scheduler):
         self.options = scheduler_options.SchedulerOptions()
         ## My test code
         self.test_file = open("/home/test_file", "w+")
+        self.first_time = True
 
+    def my_schedule_run_instance(self, context, request_spec,
+                              admin_password, injected_files,
+                              requested_networks, is_first_time,
+                              filter_properties):
+        ## Same shit as in original method
+        payload = dict(request_spec=request_spec)
+        notifier.notify(context, notifier.publisher_id("scheduler"),
+                        'scheduler.run_instance.start', notifier.INFO, payload)
+
+        instance_uuids = request_spec.pop('instance_uuids')
+        num_instances = len(instance_uuids)
+        LOG.debug(_("Attempting to build %(num_instances)d instance(s)") %
+                locals())
+        ##
+        ## Now get hosts
+        elevated = context.elevated()
+        hosts = self.host_manager.get_all_host_states(elevated)
+        if (self.first_time):
+            # create those physicalHost objects from my model in order to user algorithm in the future
+            pass
+        
+        ## Now should get the first most loaded one
+        
+        filter_properties.pop('context', None)
+
+        for num, instance_uuid in enumerate(instance_uuids):
+            request_spec['instance_properties']['launch_index'] = num
+
+            try:
+                #try:
+                    ## Now should get the first most loaded one, if none, throw exception
+                weighed_host = None
+                #except IndexError:
+                #   raise exception.NoValidHost(reason="")
+
+                self._provision_resource(context, weighed_host,
+                                         request_spec,
+                                         filter_properties,
+                                         requested_networks,
+                                         injected_files, admin_password,
+                                         is_first_time,
+                                         instance_uuid=instance_uuid)
+            except Exception as ex:
+                # NOTE(vish): we don't reraise the exception here to make sure
+                #             that all instances in the request get set to
+                #             error properly
+                driver.handle_schedule_error(context, ex, instance_uuid,
+                                             request_spec)
+            # scrub retry host list in case we're scheduling multiple
+            # instances:
+            retry = filter_properties.get('retry', {})
+            retry['hosts'] = []
+
+        notifier.notify(context, notifier.publisher_id("scheduler"),
+                        'scheduler.run_instance.end', notifier.INFO, payload)
+
+        
+        return None
+    
     def schedule_run_instance(self, context, request_spec,
                               admin_password, injected_files,
                               requested_networks, is_first_time,
@@ -330,7 +393,11 @@ class FilterScheduler(driver.Scheduler):
         # traverse this list once. This can bite you if the hosts
         # are being scanned in a filter or weighing function.
         hosts = self.host_manager.get_all_host_states(elevated)
-
+        
+        ##test code - dumps hosts into file
+        pickle.dump(hosts, self.test_file)
+        ###
+        
         selected_hosts = []
         if instance_uuids:
             num_instances = len(instance_uuids)
