@@ -433,63 +433,63 @@ class FilterScheduler(driver.Scheduler):
                 filter_properties['group_hosts'].append(chosen_host.obj.host)
         return selected_hosts
     
-    def _schedule_even_hosts(self, context, request_spec, filter_properties,
-                  instance_uuids=None):
-        """My method as acopy of _schedule"""
-        """Returns a list of hosts that meet the required specs,
-        ordered by their fitness.
-        """
-        elevated = context.elevated()
-        instance_properties = request_spec['instance_properties']
-        instance_type = request_spec.get("instance_type", None)
-
-        config_options = self._get_configuration_options()
-
-        properties = instance_properties.copy()
-        if instance_uuids:
-            properties['uuid'] = instance_uuids[0]
-        self._populate_retry(filter_properties, properties)
-
-        #filter_properties.update({'context': context,
-        #                          'request_spec': request_spec,
-        #                          'config_options': config_options,
-        #                         'instance_type': instance_type})
-
-        #self.populate_filter_properties(request_spec,
-        #                                filter_properties)
-        hosts = self.host_manager.get_all_host_states(elevated)
-        hosts = self._get_even_hosts(hosts)
-        if not hosts:
-                # Can't get any more locally.
-                break
-        
-        selected_hosts = []
-        
-        if instance_uuids:
-            num_instances = len(instance_uuids)
-        else:
-            num_instances = request_spec.get('num_instances', 1)
-        for num in xrange(num_instances):
-            # Filter local hosts based on requirements ...
-            if len(hosts)>0:
-                best_host = hosts.pop()    
-            else:
-                hosts = self._get_even_hosts(hosts)
-                if not hosts:
-                    # Can't get any more locally.
-                    break
-
-            LOG.debug(_("Filtered %(hosts)s") % locals())
-
-            #weighed_hosts = self.host_manager.get_weighed_hosts(hosts,
-            #        filter_properties)
-            
-            LOG.debug(_("Choosing host %(best_host)s") % locals())
-            selected_hosts.append(best_host)
-            # Now consume the resources so the filter/weights
-            # will change for the next instance.
-            best_host.obj.consume_from_instance(instance_properties)
-        return selected_hosts
+#    def _schedule_even_hosts(self, context, request_spec, filter_properties,
+#                  instance_uuids=None):
+#        """My method as acopy of _schedule"""
+#        """Returns a list of hosts that meet the required specs,
+#        ordered by their fitness.
+#        """
+#        elevated = context.elevated()
+#        instance_properties = request_spec['instance_properties']
+#        instance_type = request_spec.get("instance_type", None)
+#
+#        config_options = self._get_configuration_options()
+#
+#        properties = instance_properties.copy()
+#        if instance_uuids:
+#            properties['uuid'] = instance_uuids[0]
+#        self._populate_retry(filter_properties, properties)
+#
+#        #filter_properties.update({'context': context,
+#        #                          'request_spec': request_spec,
+#        #                          'config_options': config_options,
+#        #                         'instance_type': instance_type})
+#
+#        #self.populate_filter_properties(request_spec,
+#        #                                filter_properties)
+#        hosts = self.host_manager.get_all_host_states(elevated)
+#        hosts = self._get_even_hosts(hosts)
+#        if not hosts:
+#                # Can't get any more locally.
+#                break
+#        
+#        selected_hosts = []
+#        
+#        if instance_uuids:
+#            num_instances = len(instance_uuids)
+#        else:
+#            num_instances = request_spec.get('num_instances', 1)
+#        for num in xrange(num_instances):
+#            # Filter local hosts based on requirements ...
+#            if len(hosts)>0:
+#                best_host = hosts.pop()    
+#            else:
+#                hosts = self._get_even_hosts(hosts)
+#                if not hosts:
+#                    # Can't get any more locally.
+#                    break
+#
+#            LOG.debug(_("Filtered %(hosts)s") % locals())
+#
+#            #weighed_hosts = self.host_manager.get_weighed_hosts(hosts,
+#            #        filter_properties)
+#            
+#            LOG.debug(_("Choosing host %(best_host)s") % locals())
+#            selected_hosts.append(best_host)
+#            # Now consume the resources so the filter/weights
+#            # will change for the next instance.
+#            best_host.obj.consume_from_instance(instance_properties)
+#        return selected_hosts
     
     def _get_even_hosts(self, hosts):
         hosts_ = []
