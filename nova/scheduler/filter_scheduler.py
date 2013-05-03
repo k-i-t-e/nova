@@ -21,8 +21,8 @@ Weighing Functions.
 """
 
 import random
-import time
-import pickle
+#import time
+#import pickle
 
 from oslo.config import cfg
 
@@ -32,7 +32,7 @@ from nova.openstack.common import log as logging
 from nova.openstack.common.notifier import api as notifier
 from nova.scheduler import driver
 from nova.scheduler import scheduler_options
-from nova.compute import api as compute_api
+#from nova.compute import api as compute_api
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -60,8 +60,8 @@ class FilterScheduler(driver.Scheduler):
         self.cost_function_cache = None
         self.options = scheduler_options.SchedulerOptions()
         ## My test code
-        self.test_file = open("/home/test_file", "w+")
-        self.first_time = True
+        ##self.test_file = open("/home/test_file", "w+")
+        ##self.first_time = True
 
 #    def my_schedule_run_instance(self, context, request_spec,
 #                              admin_password, injected_files,
@@ -78,7 +78,6 @@ class FilterScheduler(driver.Scheduler):
 #                locals())
 #        ##
 #        ## Now get hosts
-#        elevated = context.elevated()
 #        hosts = self.host_manager.get_all_host_states(elevated)
 #        if (self.first_time):
 #            # create those physicalHost objects from my model in order to user algorithm in the future
@@ -243,7 +242,7 @@ class FilterScheduler(driver.Scheduler):
                 weighed_host.obj)
 ######################### This is it!! #############################
         ##test code
-        self.test_file.write(str(time.gmtime())+"Was schedulded an instance")
+        ##self.test_file.write(str(time.gmtime())+"Was schedulded an instance")
         ##
         self.compute_rpcapi.run_instance(context, instance=updated_instance,
                 host=weighed_host.obj.host,
