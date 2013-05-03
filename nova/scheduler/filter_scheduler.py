@@ -21,7 +21,7 @@ Weighing Functions.
 """
 
 import random
-#import time
+import time
 #import pickle
 
 from oslo.config import cfg
@@ -60,7 +60,7 @@ class FilterScheduler(driver.Scheduler):
         self.cost_function_cache = None
         self.options = scheduler_options.SchedulerOptions()
         ## My test code
-        ##self.test_file = open("/home/test_file", "w+")
+        self.test_file = open("/home/test_file", "w+")
         ##self.first_time = True
 
 #    def my_schedule_run_instance(self, context, request_spec,
@@ -242,7 +242,7 @@ class FilterScheduler(driver.Scheduler):
                 weighed_host.obj)
 ######################### This is it!! #############################
         ##test code
-        ##self.test_file.write(str(time.gmtime())+"Was schedulded an instance")
+        self.test_file.write(str(time.gmtime())+"Was schedulded an instance")
         ##
         self.compute_rpcapi.run_instance(context, instance=updated_instance,
                 host=weighed_host.obj.host,
