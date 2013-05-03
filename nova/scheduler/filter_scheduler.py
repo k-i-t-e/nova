@@ -394,7 +394,7 @@ class FilterScheduler(driver.Scheduler):
         hosts = self.host_manager.get_all_host_states(elevated)
         
         ##test code - dumps hosts into file
-        pickle.dump(hosts, self.test_file)
+        #pickle.dump(hosts, self.test_file)
         ###
         
         selected_hosts = []
