@@ -242,7 +242,7 @@ class FilterScheduler(driver.Scheduler):
                 weighed_host.obj)
 ######################### This is it!! #############################
         ##test code
-        self.test_file.write(str(time.gmtime())+"Was schedulded an instance")
+        #self.test_file.write(str(time.gmtime())+"Was schedulded an instance")
         ##
         self.compute_rpcapi.run_instance(context, instance=updated_instance,
                 host=weighed_host.obj.host,
