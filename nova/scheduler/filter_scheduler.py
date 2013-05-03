@@ -22,7 +22,7 @@ Weighing Functions.
 
 import random
 import time
-#import pickle
+import pickle
 
 from oslo.config import cfg
 
@@ -242,7 +242,7 @@ class FilterScheduler(driver.Scheduler):
                 weighed_host.obj)
 ######################### This is it!! #############################
         ##test code
-        #self.test_file.write(str(time.gmtime())+"Was schedulded an instance")
+        self.test_file.write(str(time.gmtime())+"Was schedulded an instance")
         ##
         self.compute_rpcapi.run_instance(context, instance=updated_instance,
                 host=weighed_host.obj.host,
@@ -394,7 +394,7 @@ class FilterScheduler(driver.Scheduler):
         hosts = self.host_manager.get_all_host_states(elevated)
         
         ##test code - dumps hosts into file
-        ##pickle.dump(hosts, self.test_file)
+        pickle.dump(hosts, self.test_file)
         ###
         
         selected_hosts = []
