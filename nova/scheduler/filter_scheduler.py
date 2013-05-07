@@ -60,7 +60,7 @@ class FilterScheduler(driver.Scheduler):
         self.cost_function_cache = None
         self.options = scheduler_options.SchedulerOptions()
         ## My test code
-        self.test_file = open("/opt/stack/devstack/test_file", "w+")
+        self.test_file = open("/opt/stack/devstack/test_file", "a+")
         self.first_time = True
 
 #    def my_schedule_run_instance(self, context, request_spec,
