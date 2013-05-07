@@ -176,6 +176,11 @@ class FilterScheduler(driver.Scheduler):
 
         notifier.notify(context, notifier.publisher_id("scheduler"),
                         'scheduler.run_instance.end', notifier.INFO, payload)
+        
+           ##test code
+        self.test_file.write("schedule_run_instance")
+        ##
+        
 
     def schedule_prep_resize(self, context, image, request_spec,
                              filter_properties, instance, instance_type,
@@ -211,6 +216,10 @@ class FilterScheduler(driver.Scheduler):
             request_spec, filter_properties, instance_uuids)]
         if not hosts:
             raise exception.NoValidHost(reason="")
+        ##test code
+        self.test_file.write("Select hosts")
+        ##
+        
         return hosts
 
     def _provision_resource(self, context, weighed_host, request_spec,
@@ -242,7 +251,7 @@ class FilterScheduler(driver.Scheduler):
                 weighed_host.obj)
 ######################### This is it!! #############################
         ##test code
-        self.test_file.write(str(time.gmtime())+"Was schedulded an instance")
+        self.test_file.write("_provision_resource") #str(time.gmtime())+
         ##
         self.compute_rpcapi.run_instance(context, instance=updated_instance,
                 host=weighed_host.obj.host,
@@ -432,6 +441,11 @@ class FilterScheduler(driver.Scheduler):
             if update_group_hosts is True:
                 filter_properties['group_hosts'].append(chosen_host.obj.host)
         return selected_hosts
+    
+        ##test code
+        self.test_file.write("_schedule")
+        ##
+        
     
 #    def _schedule_even_hosts(self, context, request_spec, filter_properties,
 #                  instance_uuids=None):
