@@ -78,6 +78,7 @@ class FilterScheduler(driver.Scheduler):
 #                locals())
 #        ##
 #        ## Now get hosts
+#        elevated = context.elevated()
 #        hosts = self.host_manager.get_all_host_states(elevated)
 #        if (self.first_time):
 #            # create those physicalHost objects from my model in order to user algorithm in the future
@@ -177,7 +178,7 @@ class FilterScheduler(driver.Scheduler):
         notifier.notify(context, notifier.publisher_id("scheduler"),
                         'scheduler.run_instance.end', notifier.INFO, payload)
         
-           ##test code
+        ##test code
         self.test_file.write("schedule_run_instance")
         ##
         
@@ -401,6 +402,10 @@ class FilterScheduler(driver.Scheduler):
         # traverse this list once. This can bite you if the hosts
         # are being scanned in a filter or weighing function.
         hosts = self.host_manager.get_all_host_states(elevated)
+        
+        ### test code
+        for host in hosts:
+            self.test_file.write(host.nodename)
         
         ##test code - dumps hosts into file
         #pickle.dump(hosts, self.test_file)
