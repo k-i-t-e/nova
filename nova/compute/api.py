@@ -634,7 +634,8 @@ class API(base.Base):
 
         # Commit the reservations
         QUOTAS.commit(context, quota_reservations)
-
+        
+        ## test code - added image_ref to request_spec
         request_spec = {
             'image': jsonutils.to_primitive(image),
             'instance_properties': base_options,
@@ -642,6 +643,7 @@ class API(base.Base):
             'instance_uuids': instance_uuids,
             'block_device_mapping': block_device_mapping,
             'security_group': security_groups,
+            'image_ref':image_href
         }
 
         return (instances, request_spec, filter_properties)

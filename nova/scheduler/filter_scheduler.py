@@ -23,6 +23,10 @@ Weighing Functions.
 import random
 import time
 import pickle
+import MySQLdb as mdb
+import nova.hypervisor_info.hypervisor_info as hypervisor_info
+import nova.hypervisor_info.algorithm as algorithm
+import nova.hypervisor_info.vm_instance as vm_instance
 
 from oslo.config import cfg
 
@@ -62,65 +66,99 @@ class FilterScheduler(driver.Scheduler):
         ## My test code
         self.test_file = open("/opt/stack/devstack/test_file", "a+")
         self.first_time = True
+        self.db = mdb.connect('localhost', 'root', 'cl0udAdmin', 'nova')
+        self.cloud = False
+        self.algorithm = algorithm.ScheduldingAlgorithm()
+        self.images_meta = {
+                            '3f7bdaf1-6299-4dcf-bc35-b32a08daf26e':'web-server',    #treat ubuntu12 as web-server
+                            '056e80c9-a0f5-4d9b-b4f2-86e2f1b987e5':'computing'        #freebsd91 as compute
+                            }
 
-#    def my_schedule_run_instance(self, context, request_spec,
-#                              admin_password, injected_files,
-#                              requested_networks, is_first_time,
-#                              filter_properties):
-#        ## Same shit as in original method
-#        payload = dict(request_spec=request_spec)
-#        notifier.notify(context, notifier.publisher_id("scheduler"),
-#                        'scheduler.run_instance.start', notifier.INFO, payload)
-#
-#        instance_uuids = request_spec.pop('instance_uuids')
-#        num_instances = len(instance_uuids)
-#        LOG.debug(_("Attempting to build %(num_instances)d instance(s)") %
-#                locals())
-#        ##
-#        ## Now get hosts
-#        elevated = context.elevated()
-#        hosts = self.host_manager.get_all_host_states(elevated)
-#        if (self.first_time):
-#            # create those physicalHost objects from my model in order to user algorithm in the future
-#            pass
-#        
-#        ## Now should get the first most loaded one
-#        
-#        filter_properties.pop('context', None)
-#
-#        for num, instance_uuid in enumerate(instance_uuids):
-#            request_spec['instance_properties']['launch_index'] = num
-#
-#            try:
-#                #try:
-#                    ## Now should get the first most loaded one, if none, throw exception
-#                weighed_host = None
-#                #except IndexError:
-#                #   raise exception.NoValidHost(reason="")
-#
-#                self._provision_resource(context, weighed_host,
-#                                         request_spec,
-#                                         filter_properties,
-#                                         requested_networks,
-#                                         injected_files, admin_password,
-#                                         is_first_time,
-#                                         instance_uuid=instance_uuid)
-#            except Exception as ex:
-#                # NOTE(vish): we don't reraise the exception here to make sure
-#                #             that all instances in the request get set to
-#                #             error properly
-#                driver.handle_schedule_error(context, ex, instance_uuid,
-#                                             request_spec)
-#            # scrub retry host list in case we're scheduling multiple
-#            # instances:
-#            retry = filter_properties.get('retry', {})
-#            retry['hosts'] = []
-#
-#        notifier.notify(context, notifier.publisher_id("scheduler"),
-#                        'scheduler.run_instance.end', notifier.INFO, payload)
-#
-#        
-#        return None
+    def my_schedule_run_instance(self, context, request_spec,
+                              admin_password, injected_files,
+                              requested_networks, is_first_time,
+                              filter_properties):
+        ## Same shit as in original method
+        payload = dict(request_spec=request_spec)
+        notifier.notify(context, notifier.publisher_id("scheduler"),
+                        'scheduler.run_instance.start', notifier.INFO, payload)
+
+        instance_uuids = request_spec.pop('instance_uuids')
+        num_instances = len(instance_uuids)
+        LOG.debug(_("Attempting to build %(num_instances)d instance(s)") %
+                locals())
+#        #query database for hosts 
+#        if self.first_time:
+#            cur = self.db.cursor()
+#            cur.execute("select hypervisor_hostname from compute_nodes")
+#            results = cur.fetchall()
+#            hostnames = []
+#            URIs = []
+#            for result in results:
+#                hostnames.append(result[0])
+#                URIs.append("qemu+ssh://"+result[0]+"/system")
+#            
+#            self.cloud = hypervisor_info.HypervisorInfo(URIs, hostnames)
+        
+        ##
+        ## Now get hosts
+        elevated = context.elevated()
+        
+        hosts = self.host_manager.get_all_host_states_copy(elevated)
+        if (self.first_time):
+            # create those physicalHost objects from my model in order to user algorithm in the future
+            hostnames = []
+            URIs = []
+            for host in hosts:
+                hostnames.append(host.nodename)
+                URIs.append("qemu+ssh://"+host.nodename+"/system")
+            self.cloud = hypervisor_info.HypervisorInfo(URIs, hostnames)
+        
+        self.algorithm.hosts = self.cloud.hosts
+        
+        ## Now should get the first most loaded one
+        ## Now need to determine the sort of vm from metadata
+        image = request_spec.pop('image_ref')
+        vm_type = self.images_meta[image]
+        cur = self.db.cursor()
+        cur.execute("select id_hostname from instances where uuid="+request_spec[0])
+        results = cur.fetchall()
+        id = results[0]
+        vm_name = "vm"+id[0]
+        vm = vm_instance.VMInstance(vm_type, vm_name)
+        
+        selected_host = self.algorithm.first_fit(vm)
+        success = False
+        weighed_host = None
+        for host in hosts:
+            if host.nodename == selected_host.host_name:
+                weighed_host = host
+                success = True
+        
+        if not success:
+           raise exception.NoValidHost(reason="")
+        
+        instance_uuid = instance_uuids[0]
+        try:
+            self._provision_resource(context, weighed_host,
+                                         request_spec,
+                                         filter_properties,
+                                         requested_networks,
+                                         injected_files, admin_password,
+                                         is_first_time,
+                                         instance_uuid=instance_uuid)
+        except Exception as ex:
+                # NOTE(vish): we don't reraise the exception here to make sure
+                #             that all instances in the request get set to
+                #             error properly
+            driver.handle_schedule_error(context, ex, instance_uuid,
+                                             request_spec)
+        
+        filter_properties.pop('context', None)
+
+        notifier.notify(context, notifier.publisher_id("scheduler"),
+                        'scheduler.run_instance.end', notifier.INFO, payload)
+
     
     def schedule_run_instance(self, context, request_spec,
                               admin_password, injected_files,
@@ -404,9 +442,9 @@ class FilterScheduler(driver.Scheduler):
         hosts = self.host_manager.get_all_host_states(elevated)
         
         ### test code
-        for host in hosts:
-            self.test_file.write(host.nodename)
-        
+#        for host in hosts: 
+#            self.test_file.write(host.nodename)
+        ## May try to use nova database directly here
         ##test code - dumps hosts into file
         #pickle.dump(hosts, self.test_file)
         ###
@@ -445,11 +483,14 @@ class FilterScheduler(driver.Scheduler):
             chosen_host.obj.consume_from_instance(instance_properties)
             if update_group_hosts is True:
                 filter_properties['group_hosts'].append(chosen_host.obj.host)
-        return selected_hosts
-    
+        
         ##test code
         self.test_file.write("_schedule")
         ##
+        
+        return selected_hosts
+    
+        
         
     
 #    def _schedule_even_hosts(self, context, request_spec, filter_properties,

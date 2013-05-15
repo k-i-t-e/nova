@@ -12,6 +12,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+from copy import deepcopy
 
 """
 Manage hosts in the current zone.
@@ -400,4 +401,46 @@ class HostManager(object):
                        "from scheduler") % locals())
             del self.host_state_map[state_key]
 
+        #return deepcopy(self.host_state_map)
         return self.host_state_map.itervalues()
+    
+    def get_all_host_states_copy(self, context):
+        #everything the same but returns a copy of hostState list instead of iterator
+        """Returns a list of HostStates that represents all the hosts
+        the HostManager knows about. Also, each of the consumable resources
+        in HostState are pre-populated and adjusted based on data in the db.
+        """
+
+        # Get resource usage across the available compute nodes:
+        compute_nodes = db.compute_node_get_all(context)
+        seen_nodes = set()
+        for compute in compute_nodes:
+            service = compute['service']
+            if not service:
+                LOG.warn(_("No service for compute ID %s") % compute['id'])
+                continue
+            host = service['host']
+            node = compute.get('hypervisor_hostname')
+            state_key = (host, node)
+            capabilities = self.service_states.get(state_key, None)
+            host_state = self.host_state_map.get(state_key)
+            if host_state:
+                host_state.update_capabilities(capabilities,
+                                               dict(service.iteritems()))
+            else:
+                host_state = self.host_state_cls(host, node,
+                        capabilities=capabilities,
+                        service=dict(service.iteritems()))
+                self.host_state_map[state_key] = host_state
+            host_state.update_from_compute_node(compute)
+            seen_nodes.add(state_key)
+
+        # remove compute nodes from host_state_map if they are not active
+        dead_nodes = set(self.host_state_map.keys()) - seen_nodes
+        for state_key in dead_nodes:
+            host, node = state_key
+            LOG.info(_("Removing dead compute node %(host)s:%(node)s "
+                       "from scheduler") % locals())
+            del self.host_state_map[state_key]
+
+        return deepcopy(self.host_state_map)
