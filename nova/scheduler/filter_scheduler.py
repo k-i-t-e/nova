@@ -63,10 +63,15 @@ class FilterScheduler(driver.Scheduler):
         super(FilterScheduler, self).__init__(*args, **kwargs)
         self.cost_function_cache = None
         self.options = scheduler_options.SchedulerOptions()
-        ## My test code
+        ## My test code#        self.cloud = False
+#        self.algorithm = algorithm.ScheduldingAlgorithm()
+#        self.images_meta = {
+#                            '3f7bdaf1-6299-4dcf-bc35-b32a08daf26e':'web-server',    #treat ubuntu12 as web-server
+#                            '056e80c9-a0f5-4d9b-b4f2-86e2f1b987e5':'computing'        #freebsd91 as compute
+#                            }
         self.test_file = open("/opt/stack/devstack/test_file", "a+")
         self.first_time = True
-        self.db = mdb.connect('localhost', 'root', 'cl0udAdmin', 'nova')
+#        self.db = mdb.connect('localhost', 'root', 'cl0udAdmin', 'nova')
 #        self.cloud = False
 #        self.algorithm = algorithm.ScheduldingAlgorithm()
 #        self.images_meta = {
