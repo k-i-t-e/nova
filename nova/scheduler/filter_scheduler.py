@@ -161,8 +161,8 @@ class FilterScheduler(driver.Scheduler):
 
     
     
-#    def empty_method(self):
-#        return None
+    def empty_method(self):
+        return None
     
     def schedule_run_instance(self, context, request_spec,
                               admin_password, injected_files,
