@@ -74,91 +74,95 @@ class FilterScheduler(driver.Scheduler):
                             '056e80c9-a0f5-4d9b-b4f2-86e2f1b987e5':'computing'        #freebsd91 as compute
                             }
 
-    def my_schedule_run_instance(self, context, request_spec,
-                              admin_password, injected_files,
-                              requested_networks, is_first_time,
-                              filter_properties):
-        ## Same shit as in original method
-        payload = dict(request_spec=request_spec)
-        notifier.notify(context, notifier.publisher_id("scheduler"),
-                        'scheduler.run_instance.start', notifier.INFO, payload)
-
-        instance_uuids = request_spec.pop('instance_uuids')
-        num_instances = len(instance_uuids)
-        LOG.debug(_("Attempting to build %(num_instances)d instance(s)") %
-                locals())
-#        #query database for hosts 
-#        if self.first_time:
-#            cur = self.db.cursor()
-#            cur.execute("select hypervisor_hostname from compute_nodes")
-#            results = cur.fetchall()
+#    def my_schedule_run_instance(self, context, request_spec,
+#                              admin_password, injected_files,
+#                              requested_networks, is_first_time,
+#                              filter_properties):
+#        ## Same shit as in original method
+#        payload = dict(request_spec=request_spec)
+#        notifier.notify(context, notifier.publisher_id("scheduler"),
+#                        'scheduler.run_instance.start', notifier.INFO, payload)
+#
+#        instance_uuids = request_spec.pop('instance_uuids')
+#        num_instances = len(instance_uuids)
+#        LOG.debug(_("Attempting to build %(num_instances)d instance(s)") %
+#                locals())
+##        #query database for hosts 
+##        if self.first_time:
+##            cur = self.db.cursor()
+##            cur.execute("select hypervisor_hostname from compute_nodes")
+##            results = cur.fetchall()
+##            hostnames = []
+##            URIs = []
+##            for result in results:
+##                hostnames.append(result[0])
+##                URIs.append("qemu+ssh://"+result[0]+"/system")
+##            
+##            self.cloud = hypervisor_info.HypervisorInfo(URIs, hostnames)
+#        
+#        ##
+#        ## Now get hosts
+#        elevated = context.elevated()
+#        
+#        hosts = self.host_manager.get_all_host_states_copy(elevated)
+#        if (self.first_time):
+#            # create those physicalHost objects from my model in order to user algorithm in the future
 #            hostnames = []
 #            URIs = []
-#            for result in results:
-#                hostnames.append(result[0])
-#                URIs.append("qemu+ssh://"+result[0]+"/system")
-#            
+#            for host in hosts:
+#                hostnames.append(host.nodename)
+#                URIs.append("qemu+ssh://"+host.nodename+"/system")
 #            self.cloud = hypervisor_info.HypervisorInfo(URIs, hostnames)
-        
-        ##
-        ## Now get hosts
-        elevated = context.elevated()
-        
-        hosts = self.host_manager.get_all_host_states_copy(elevated)
-        if (self.first_time):
-            # create those physicalHost objects from my model in order to user algorithm in the future
-            hostnames = []
-            URIs = []
-            for host in hosts:
-                hostnames.append(host.nodename)
-                URIs.append("qemu+ssh://"+host.nodename+"/system")
-            self.cloud = hypervisor_info.HypervisorInfo(URIs, hostnames)
-        
-        self.algorithm.hosts = self.cloud.hosts
-        
-        ## Now should get the first most loaded one
-        ## Now need to determine the sort of vm from metadata
-        image = request_spec.pop('image_ref')
-        vm_type = self.images_meta[image]
-        cur = self.db.cursor()
-        cur.execute("select id_hostname from instances where uuid="+request_spec[0])
-        results = cur.fetchall()
-        id = results[0]
-        vm_name = "vm"+id[0]
-        vm = vm_instance.VMInstance(vm_type, vm_name)
-        
-        selected_host = self.algorithm.first_fit(vm)
-        success = False
-        weighed_host = None
-        for host in hosts:
-            if host.nodename == selected_host.host_name:
-                weighed_host = host
-                success = True
-        
-        if not success:
-           raise exception.NoValidHost(reason="")
-        
-        instance_uuid = instance_uuids[0]
-        try:
-            self._provision_resource(context, weighed_host,
-                                         request_spec,
-                                         filter_properties,
-                                         requested_networks,
-                                         injected_files, admin_password,
-                                         is_first_time,
-                                         instance_uuid=instance_uuid)
-        except Exception as ex:
-                # NOTE(vish): we don't reraise the exception here to make sure
-                #             that all instances in the request get set to
-                #             error properly
-            driver.handle_schedule_error(context, ex, instance_uuid,
-                                             request_spec)
-        
-        filter_properties.pop('context', None)
+#        
+#        self.algorithm.hosts = self.cloud.hosts
+#        
+#        ## Now should get the first most loaded one
+#        ## Now need to determine the sort of vm from metadata
+#        image = request_spec.pop('image_ref')
+#        vm_type = self.images_meta[image]
+#        cur = self.db.cursor()
+#        cur.execute("select id_hostname from instances where uuid="+request_spec[0])
+#        results = cur.fetchall()
+#        id = results[0]
+#        vm_name = "vm"+id[0]
+#        vm = vm_instance.VMInstance(vm_type, vm_name)
+#        
+#        selected_host = self.algorithm.first_fit(vm)
+#        success = False
+#        weighed_host = None
+#        for host in hosts:
+#            if host.nodename == selected_host.host_name:
+#                weighed_host = host
+#                success = True
+#        
+#        if not success:
+#           raise exception.NoValidHost(reason="")
+#        
+#        instance_uuid = instance_uuids[0]
+#        try:
+#            self._provision_resource(context, weighed_host,
+#                                         request_spec,
+#                                         filter_properties,
+#                                         requested_networks,
+#                                         injected_files, admin_password,
+#                                         is_first_time,
+#                                         instance_uuid=instance_uuid)
+#        except Exception as ex:
+#                # NOTE(vish): we don't reraise the exception here to make sure
+#                #             that all instances in the request get set to
+#                #             error properly
+#            driver.handle_schedule_error(context, ex, instance_uuid,
+#                                             request_spec)
+#        
+#        filter_properties.pop('context', None)
+#
+#        notifier.notify(context, notifier.publisher_id("scheduler"),
+#                        'scheduler.run_instance.end', notifier.INFO, payload)
 
-        notifier.notify(context, notifier.publisher_id("scheduler"),
-                        'scheduler.run_instance.end', notifier.INFO, payload)
-
+    
+    
+    def empty_method(self):
+        return None
     
     def schedule_run_instance(self, context, request_spec,
                               admin_password, injected_files,
