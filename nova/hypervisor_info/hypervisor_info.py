@@ -3,7 +3,7 @@ Created on Apr 12, 2013
 
 @author: kite
 '''
-import libvirt
+import libvirt.libvirt as lvirt
 import time
 import vm_instance
 from physical_host import PhysicalHost
@@ -15,7 +15,7 @@ class HypervisorInfo:
         self.conns = []
         self.hosts = []
         for i in xrange(len(URIs)):
-            self.conns.append(libvirt.open(URIs[i]))
+            self.conns.append(lvirt.open(URIs[i]))
             self.hosts.append(PhysicalHost(hostnames[i]))
         
         

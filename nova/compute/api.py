@@ -642,8 +642,8 @@ class API(base.Base):
             'instance_type': instance_type,
             'instance_uuids': instance_uuids,
             'block_device_mapping': block_device_mapping,
-            'security_group': security_groups
-#            'image_ref':image_href
+            'security_group': security_groups,
+            'image_ref':image_href
         }
 
         return (instances, request_spec, filter_properties)

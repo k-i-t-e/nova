@@ -3,7 +3,7 @@ Created on Mar 13, 2013
 
 @author: kite
 '''
-import libvirt
+#import libvirt
 class PhysicalHost:
     def __init__(self, host_name):
         # Model fields
